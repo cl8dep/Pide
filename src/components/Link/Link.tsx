@@ -1,19 +1,25 @@
 import * as React from "react";
 import clsx from "clsx";
 import { useRouter } from "next/router";
-import NextLink from "next/link";
-import MuiLink from "@mui/material/Link";
+import NextLink, { LinkProps as NextLinkProps } from "next/link";
+import MuiLink, { LinkProps as MuiLinkProps } from "@mui/material/Link";
 import { styled } from "@mui/material/styles";
-
-import LinkProps from "./Link.props";
 
 // Add support for the sx prop for consistency with the other branches.
 const Anchor = styled("a")({});
 
-export const NextLinkComposed = React.forwardRef(function NextLinkComposed(
-  props: LinkProps,
-  ref
-) {
+interface NextLinkComposedProps
+  extends Omit<React.AnchorHTMLAttributes<HTMLAnchorElement>, "href">,
+    Omit<NextLinkProps, "href" | "as"> {
+  to: NextLinkProps["href"];
+  linkAs?: NextLinkProps["as"];
+  href?: NextLinkProps["href"];
+}
+
+export const NextLinkComposed = React.forwardRef<
+  HTMLAnchorElement,
+  NextLinkComposedProps
+>(function NextLinkComposed(props, ref) {
   const {
     to,
     linkAs,
@@ -41,9 +47,20 @@ export const NextLinkComposed = React.forwardRef(function NextLinkComposed(
   );
 });
 
+export type LinkProps = {
+  activeClassName?: string;
+  as?: NextLinkProps["as"];
+  href: NextLinkProps["href"];
+  noLinkStyle?: boolean;
+} & Omit<NextLinkComposedProps, "to" | "linkAs" | "href"> &
+  Omit<MuiLinkProps, "href">;
+
 // A styled version of the Next.js Link component:
 // https://nextjs.org/docs/#with-link
-const Link = React.forwardRef(function Link(props: LinkProps, ref) {
+const Link = React.forwardRef<HTMLAnchorElement, LinkProps>(function Link(
+  props,
+  ref
+) {
   const {
     activeClassName = "active",
     as: linkAs,
@@ -62,14 +79,16 @@ const Link = React.forwardRef(function Link(props: LinkProps, ref) {
 
   const isExternal =
     typeof href === "string" &&
-    (href.indexOf("http") === 0 || href.indexOf("mailto:") === 0);
+    (href.indexOf("http") === 0 ||
+      href.indexOf("https") === 0 ||
+      href.indexOf("mailto:") === 0);
 
   if (isExternal) {
     if (noLinkStyle) {
-      return <Anchor className={className} href={href} ref={ref} {...other} />;
+      return <Anchor className={className} href={href.toString()} ref={ref} {...other} />;
     }
 
-    return <MuiLink className={className} href={href} ref={ref} {...other} />;
+    return <MuiLink className={className} href={href.toString()} ref={ref} {...other} />;
   }
 
   if (noLinkStyle) {
